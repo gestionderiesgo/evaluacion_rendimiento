@@ -1,0 +1,62 @@
+import pandas as pd
+import streamlit as st
+
+# Título de la aplicación
+st.title("Evaluación de Desempeño Laboral - Equipo de Gestión de Riesgos")
+
+# Inicializar lista para almacenar datos de los trabajadores
+if "data" not in st.session_state:
+    st.session_state.data = []
+
+# Formulario para ingresar datos de los trabajadores
+with st.form(key="evaluation_form"):
+    st.header("Ingresar Evaluación de Desempeño")
+    
+    # Datos del trabajador
+    nombre = st.text_input("Nombre del trabajador", "")
+    cumplimiento = st.slider("Cumplimiento de Planes de Gestión de Riesgos (1-10)", min_value=1, max_value=10, value=5)
+    reaccion_emergencias = st.slider("Reacción ante Emergencias (1-10)", min_value=1, max_value=10, value=5)
+    puntualidad = st.slider("Puntualidad (1-10)", min_value=1, max_value=10, value=5)
+    trabajo_equipo = st.slider("Trabajo en Equipo (1-10)", min_value=1, max_value=10, value=5)
+    proactividad = st.slider("Proactividad y Soluciones Innovadoras (1-10)", min_value=1, max_value=10, value=5)
+    
+    # Botón para agregar trabajador
+    submit_button = st.form_submit_button("Agregar Evaluación")
+    
+    if submit_button and nombre:
+        # Calcular la calificación total ponderada
+        calificacion_total = round(
+            (cumplimiento * 0.4) + (reaccion_emergencias * 0.3) +
+            (puntualidad * 0.1) + (trabajo_equipo * 0.1) + (proactividad * 0.1), 2
+        )
+        
+        # Guardar los datos en la sesión
+        st.session_state.data.append({
+            "Nombre": nombre,
+            "Cumplimiento de Planes": cumplimiento,
+            "Reacción ante Emergencias": reaccion_emergencias,
+            "Puntualidad": puntualidad,
+            "Trabajo en Equipo": trabajo_equipo,
+            "Proactividad": proactividad,
+            "Calificación Total": calificacion_total
+        })
+        st.success(f"Evaluación de {nombre} agregada exitosamente.")
+
+# Mostrar tabla con resultados
+if st.session_state.data:
+    st.subheader("Resultados de la Evaluación")
+    df = pd.DataFrame(st.session_state.data)
+    st.dataframe(df)
+
+    # Descargar resultados en Excel
+    @st.cache_data
+    def convertir_excel(df):
+        return df.to_excel(index=False, engine="openpyxl")
+
+    resultados = convertir_excel(df)
+    st.download_button(
+        label="Descargar Resultados",
+        data=resultados,
+        file_name="Evaluación_Gestión_Riesgos.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
